@@ -377,7 +377,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let size = fixedSize ?? (measured.width > 50 && measured.height > 50 ? measured : NSSize(width: 300, height: 300))
         fixedSize = size
 
-        var frame = NSRect(x: buttonRect.midX - size.width / 2, y: buttonRect.minY - size.height - 6,
+        var frame = NSRect(x: buttonRect.midX - size.width / 2, y: buttonRect.minY - size.height - 3,
                            width: size.width, height: size.height)
         if let screen = window.screen?.visibleFrame {
             frame.origin.x = min(max(frame.minX, screen.minX + 8), screen.maxX - frame.width - 8)
