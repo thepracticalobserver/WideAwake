@@ -152,7 +152,9 @@ struct PopoverView: View {
             stats(now: now)
             footer
         }
-        .padding(20)
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 14)
         .environment(\.colorScheme, .dark)
     }
 
@@ -272,6 +274,7 @@ struct PopoverView: View {
             .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 2)
+        .padding(.top, 6)
     }
 
     /// Short relative time ("12s ago") so the stats columns stay evenly spaced.
