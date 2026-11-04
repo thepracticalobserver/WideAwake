@@ -320,6 +320,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.button?.action = #selector(togglePanel)
         model.onActiveChanged = { [weak self] in self?.updateIcon() }
         updateIcon()
+
+        // Dev flag used to produce the README screenshots: `--snapshot out.png [--on]`.
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count {
+            snapshot(to: args[i + 1], active: args.contains("--on"))
+        }
+    }
+
+    private func snapshot(to path: String, active: Bool) {
+        model.presented = true
+        if active {
+            model.isActive = true
+            model.startedAt = Date(timeIntervalSinceNow: -754)
+            model.lastMove = Date(timeIntervalSinceNow: -12)
+            model.nextMove = Date(timeIntervalSinceNow: 18)
+            model.moveCount = 25
+        }
+        let size = hosting.sizeThatFits(in: CGSize(width: 300, height: 1000))
+        let window = NSWindow(contentRect: NSRect(x: 200, y: 200, width: size.width, height: size.height),
+                              styleMask: .borderless, backing: .buffered, defer: false)
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.contentViewController = hosting
+        window.setContentSize(size)
+        window.orderFrontRegardless()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            let view = self.hosting.view
+            view.layoutSubtreeIfNeeded()
+            if let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) {
+                view.cacheDisplay(in: view.bounds, to: rep)
+                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+            }
+            NSApp.terminate(nil)
+        }
     }
 
     @objc private func togglePanel() {

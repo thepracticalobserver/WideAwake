@@ -3,6 +3,11 @@
 A tiny macOS menubar app that keeps your Mac and apps like Slack looking active.
 Click the lightbulb in the menubar, then tap the bulb to turn it on.
 
+<p align="center">
+  <img src="docs/off.png" width="280" alt="Wide Awake, off">
+  <img src="docs/on.png" width="280" alt="Wide Awake, active">
+</p>
+
 - Every 30 seconds it nudges the cursor 5px and back, taps Shift, and holds off display and system sleep.
 - It skips a nudge if you were using the Mac in the last 10 seconds.
 - Optional "Start at login".
@@ -19,3 +24,7 @@ Produces a universal (Apple Silicon + Intel) `Wide Awake.app`, macOS 14 or newer
 
 Grant Accessibility access (System Settings > Privacy & Security > Accessibility) so macOS lets the app post input events.
 If macOS blocks the app, run `xattr -cr "/Applications/Wide Awake.app"` or right-click it and choose Open.
+
+## Install
+
+Download `WideAwake.dmg` from the latest release, open it and drag Wide Awake into Applications.
