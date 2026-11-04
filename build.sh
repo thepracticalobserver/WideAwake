@@ -3,7 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 APP="Wide Awake.app"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+cp AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # Universal binary (Apple Silicon + Intel), macOS 14+.
 swiftc -O -target arm64-apple-macos14.0 main.swift -o /tmp/WideAwake-arm64
 swiftc -O -target x86_64-apple-macos14.0 main.swift -o /tmp/WideAwake-x86_64
@@ -16,6 +17,7 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
   <key>CFBundleName</key><string>Wide Awake</string>
   <key>CFBundleIdentifier</key><string>com.local.wideawake</string>
   <key>CFBundleExecutable</key><string>WideAwake</string>
+  <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>LSUIElement</key><true/>
