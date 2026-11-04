@@ -25,7 +25,7 @@ Produces a universal (Apple Silicon + Intel) `Wide Awake.app`, macOS 14 or newer
 
 ## First run
 
-Grant Accessibility access (System Settings > Privacy & Security > Accessibility) so macOS lets the app post input events.
+Grant access so macOS lets the app post input events: System Settings > Privacy & Security > **Device Control and Data Access** (called **Accessibility** on older macOS). Switch on Wide Awake in that list.
 If macOS blocks the app, run `xattr -cr "/Applications/Wide Awake.app"` or right-click it and choose Open.
 
 ## Install

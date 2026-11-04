@@ -29,7 +29,8 @@ final class Model: ObservableObject {
     func toggle() { isActive ? stop() : start() }
 
     func start() {
-        // Posting synthetic mouse events requires the Accessibility permission.
+        // Posting synthetic mouse events requires the Accessibility permission
+        // (shown as "Device Control and Data Access" on the newest macOS).
         let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         guard AXIsProcessTrustedWithOptions(options) else { return }
 
@@ -191,10 +192,11 @@ struct PopoverView: View {
                 }
                 // The permission prompt lives in this line (not a separate banner) so the card never changes height.
                 if !trusted {
-                    Button("Allow Accessibility") {
+                    Button("Allow access") {
                         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
                     }
                     .buttonStyle(.plain)
+                    .help("Privacy & Security > Device Control and Data Access (called Accessibility on older macOS)")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.orange)
                     .lineLimit(1)
