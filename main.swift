@@ -220,7 +220,7 @@ struct PopoverView: View {
         HStack(spacing: 0) {
             stat("Active for", model.startedAt.map { format(now.timeIntervalSince($0)) } ?? "-")
             stat("Moves", model.isActive ? "\(model.moveCount)" : "-")
-            stat("Last move", model.lastMove.map { $0.formatted(date: .omitted, time: .standard) } ?? "-")
+            stat("Last move", model.lastMove.map { ago(now.timeIntervalSince($0)) } ?? "-")
         }
         .opacity(model.isActive ? 1 : 0.5)
         .padding(.vertical, 14)
@@ -270,6 +270,12 @@ struct PopoverView: View {
             .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 2)
+    }
+
+    /// Short relative time ("12s ago") so the stats columns stay evenly spaced.
+    private func ago(_ seconds: TimeInterval) -> String {
+        let s = max(0, Int(seconds))
+        return s < 60 ? "\(s)s ago" : s < 3600 ? "\(s / 60)m ago" : "\(s / 3600)h ago"
     }
 
     private func format(_ seconds: TimeInterval) -> String {
