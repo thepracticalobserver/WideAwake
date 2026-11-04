@@ -130,12 +130,12 @@ struct PopoverView: View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !model.isActive)) { context in
             content(now: context.date)
         }
-        .frame(width: 300)
+        .frame(width: 240)
         .background(RoundedRectangle(cornerRadius: 16).fill(panelColor))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.10), lineWidth: 1))
         // Timings measured from a reference recording: opens in ~0.15s from ~45% size with a tiny
         // overshoot; closes in ~0.2s shrinking toward the icon while fading.
-        .scaleEffect(model.presented ? 1 : 0.4, anchor: UnitPoint(x: model.arrowX / 300, y: 0))
+        .scaleEffect(model.presented ? 1 : 0.4, anchor: UnitPoint(x: model.arrowX / 240, y: 0))
         .animation(model.presented ? .spring(response: 0.24, dampingFraction: 0.72)
                                    : .easeIn(duration: 0.2), value: model.presented)
         .opacity(model.presented ? 1 : 0)
@@ -147,18 +147,18 @@ struct PopoverView: View {
         let remaining = model.nextMove.map { max(0, $0.timeIntervalSince(now)) } ?? model.interval
         let progress = model.isActive ? 1 - remaining / model.interval : 0
 
-        return VStack(spacing: 16) {
+        return VStack(spacing: 12) {
             top(remaining: remaining, progress: progress, trusted: trusted)
             stats(now: now)
             footer
         }
-        .padding(20)
+        .padding(16)
         .environment(\.colorScheme, .dark)
     }
 
     /// Bulb inside the countdown ring (tap to toggle), status beside it.
     private func top(remaining: TimeInterval, progress: Double, trusted: Bool) -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             Button {
                 // No withAnimation here: it would animate the text layout too. Only the bulb animates (below).
                 model.toggle()
@@ -166,19 +166,19 @@ struct PopoverView: View {
                 ZStack {
                     Circle()
                         .fill(RadialGradient(colors: [.yellow.opacity(model.isActive ? 0.35 : 0), .clear],
-                                             center: .center, startRadius: 4, endRadius: 60))
-                    Circle().stroke(Color.white.opacity(0.10), lineWidth: 6)
+                                             center: .center, startRadius: 3, endRadius: 46))
+                    Circle().stroke(Color.white.opacity(0.10), lineWidth: 5)
                     Circle()
                         .trim(from: 0, to: progress)
                         .stroke(AngularGradient(colors: [.yellow, .orange], center: .center),
-                                style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                style: StrokeStyle(lineWidth: 5, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     Image(systemName: model.isActive ? "lightbulb.fill" : "lightbulb")
-                        .font(.system(size: 34))
+                        .font(.system(size: 26))
                         .foregroundStyle(model.isActive ? Color.yellow : Color.white.opacity(0.55))
                         .symbolEffect(.pulse, isActive: model.isActive)
                 }
-                .frame(width: 104, height: 104)
+                .frame(width: 80, height: 80)
                 .contentShape(Circle())
                 .animation(.smooth, value: model.isActive)
             }
@@ -187,8 +187,8 @@ struct PopoverView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
-                    Circle().fill(model.isActive ? Color.green : Color.white.opacity(0.3)).frame(width: 8, height: 8)
-                    Text(model.isActive ? "Active" : "Off").font(.system(size: 20, weight: .semibold)).lineLimit(1)
+                    Circle().fill(model.isActive ? Color.green : Color.white.opacity(0.3)).frame(width: 7, height: 7)
+                    Text(model.isActive ? "Active" : "Off").font(.system(size: 16, weight: .semibold)).lineLimit(1)
                 }
                 // The permission prompt lives in this line (not a separate banner) so the card never changes height.
                 if !trusted {
@@ -197,13 +197,13 @@ struct PopoverView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Privacy & Security > Device Control and Data Access (called Accessibility on older macOS)")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 10.5, weight: .semibold))
                     .foregroundStyle(.orange)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 } else {
                     Text(model.isActive ? "Next move in \(Int(remaining.rounded(.up)))s" : "Tap to start")
-                        .font(.system(size: 12))
+                        .font(.system(size: 10.5))
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                         .lineLimit(1)
@@ -213,8 +213,8 @@ struct PopoverView: View {
             // The text column takes whatever is left, so the ring never moves when the text changes.
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(16)
-        .frame(width: 260)
+        .padding(12)
+        .frame(width: 208)
         .card()
     }
 
@@ -225,18 +225,18 @@ struct PopoverView: View {
             stat("Last move", model.lastMove.map { ago(now.timeIntervalSince($0)) } ?? "-")
         }
         .opacity(model.isActive ? 1 : 0.5)
-        .padding(.vertical, 14)
-        .frame(width: 260)
+        .padding(.vertical, 10)
+        .frame(width: 208)
         .card()
     }
 
     private func stat(_ title: String, _ value: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.system(size: 11.5, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1).minimumScaleFactor(0.7)
-            Text(title).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+            Text(title).font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(1)
         }
         .frame(maxWidth: .infinity)
     }
@@ -247,9 +247,9 @@ struct PopoverView: View {
             if let error = model.loginError {
                 Text(error).font(.system(size: 10)).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading)
             }
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Text("WideAwake")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 9, weight: .medium))
                     .foregroundStyle(muted.opacity(0.7))
                     .fixedSize()
                 Spacer(minLength: 0)
@@ -267,7 +267,7 @@ struct PopoverView: View {
                 }
             }
             .buttonStyle(.plain)
-            .font(.system(size: 11, weight: .semibold))
+            .font(.system(size: 9.5, weight: .medium))
             .foregroundStyle(muted)
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -345,7 +345,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             model.nextMove = Date(timeIntervalSinceNow: 18)
             model.moveCount = 25
         }
-        let size = hosting.sizeThatFits(in: CGSize(width: 300, height: 1000))
+        let size = hosting.sizeThatFits(in: CGSize(width: 240, height: 1000))
         let window = NSWindow(contentRect: NSRect(x: 200, y: 200, width: size.width, height: size.height),
                               styleMask: .borderless, backing: .buffered, defer: false)
         window.isOpaque = false
@@ -375,8 +375,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let buttonRect = window.convertToScreen(button.convert(button.bounds, to: nil))
         hosting.view.layoutSubtreeIfNeeded()
         // With automatic sizing off, ask SwiftUI for the content size directly (once), with a safe fallback.
-        let measured = hosting.sizeThatFits(in: CGSize(width: 300, height: 1000))
-        let size = fixedSize ?? (measured.width > 50 && measured.height > 50 ? measured : NSSize(width: 300, height: 300))
+        let measured = hosting.sizeThatFits(in: CGSize(width: 240, height: 1000))
+        let size = fixedSize ?? (measured.width > 50 && measured.height > 50 ? measured : NSSize(width: 240, height: 250))
         fixedSize = size
 
         var frame = NSRect(x: buttonRect.midX - size.width / 2, y: buttonRect.minY - size.height - 3,
