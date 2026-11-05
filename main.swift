@@ -297,7 +297,7 @@ final class Panel: NSPanel {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+    private let statusItem = NSStatusBar.system.statusItem(withLength: 17)
     private let model = Model()
     private var panel: Panel!
     private var hosting: NSHostingController<PopoverView>!
