@@ -146,10 +146,12 @@ final class Model: ObservableObject {
 
 // MARK: - Views
 
-private let panelColor = Color(red: 0.07, green: 0.075, blue: 0.095)
+private let panelColor = Color(red: 0.08, green: 0.08, blue: 0.08)
+// The single accent: a warm lamp amber for the bulb, countdown ring and Caffeine switch.
+private let amber = Color(red: 0.91, green: 0.64, blue: 0.24)
 
 private extension View {
-    func card(radius: CGFloat = 14) -> some View {
+    func card(radius: CGFloat = 16) -> some View {
         background(RoundedRectangle(cornerRadius: radius).fill(Color.white.opacity(0.05)))
             .overlay(RoundedRectangle(cornerRadius: radius).stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
@@ -188,7 +190,7 @@ struct PopoverView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 20)
-        .padding(.bottom, 14)
+        .padding(.bottom, 16)
         .environment(\.colorScheme, .dark)
     }
 
@@ -200,18 +202,14 @@ struct PopoverView: View {
                 model.toggle()
             } label: {
                 ZStack {
-                    Circle()
-                        .fill(RadialGradient(colors: [.yellow.opacity(model.isActive ? 0.35 : 0), .clear],
-                                             center: .center, startRadius: 4, endRadius: 60))
-                    Circle().stroke(Color.white.opacity(0.10), lineWidth: 6)
+                    Circle().stroke(Color.white.opacity(0.08), lineWidth: 4)
                     Circle()
                         .trim(from: 0, to: progress)
-                        .stroke(AngularGradient(colors: [.yellow, .orange], center: .center),
-                                style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .stroke(amber, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     Image(systemName: model.isActive ? "lightbulb.fill" : "lightbulb")
                         .font(.system(size: 34))
-                        .foregroundStyle(model.isActive ? Color.yellow : Color.white.opacity(0.55))
+                        .foregroundStyle(model.isActive ? amber : Color.white.opacity(0.4))
                         .symbolEffect(.pulse, isActive: model.isActive)
                 }
                 .frame(width: 104, height: 104)
@@ -222,9 +220,9 @@ struct PopoverView: View {
             .help(model.isActive ? "Click to turn off" : "Click to turn on")
 
             VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Circle().fill(model.isActive ? Color.green : Color.white.opacity(0.3)).frame(width: 8, height: 8)
-                    Text(model.isActive ? "Active" : "Off").font(.system(size: 20, weight: .semibold)).lineLimit(1)
+                HStack(spacing: 8) {
+                    Circle().fill(model.isActive ? amber : Color.white.opacity(0.25)).frame(width: 8, height: 8)
+                    Text(model.isActive ? "Active" : "Off").font(.system(size: 20, weight: .medium)).lineLimit(1)
                 }
                 // The permission prompt lives in this line (not a separate banner) so the card never changes height.
                 if !trusted {
@@ -233,8 +231,8 @@ struct PopoverView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Privacy & Security > Device Control and Data Access (called Accessibility on older macOS)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.orange)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(amber)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 } else {
@@ -257,17 +255,16 @@ struct PopoverView: View {
     /// Separate keep-awake switch: no mouse movement, so the screensaver still runs when you are away.
     private var caffeine: some View {
         let covered = model.isActive  // Wide Awake already holds system and display sleep
-        let blue = Color(red: 0.23, green: 0.61, blue: 0.96)
         return HStack(spacing: 12) {
             Image(systemName: "cup.and.saucer")
                 .font(.system(size: 20))
-                .foregroundStyle(model.caffeineOn ? blue : Color.white.opacity(0.55))
+                .foregroundStyle(model.caffeineOn && !covered ? amber : Color.white.opacity(0.4))
                 .frame(width: 26)
             VStack(alignment: .leading, spacing: 2) {
-                Text("Caffeine").font(.system(size: 14, weight: .medium)).lineLimit(1)
-                Text(covered ? "Covered by Wide Awake" : "Screen stays on")
+                Text("Caffeine").font(.system(size: 14, weight: .medium)).foregroundStyle(covered ? Color.white.opacity(0.5) : Color.white).lineLimit(1)
+                Text(covered ? "Covered by WideAwake" : "Screen stays on")
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.white.opacity(covered ? 0.4 : 0.5))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -276,48 +273,48 @@ struct PopoverView: View {
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .controlSize(.small)
-                .tint(blue)
+                .tint(amber)
+                .opacity(covered ? 0.5 : 1)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .frame(width: 260)
         .card()
-        .opacity(covered ? 0.55 : 1)
         .help("Keeps your Mac and screen awake without moving the mouse")
     }
 
     private func stats(now: Date) -> some View {
         HStack(spacing: 0) {
-            stat("Active for", model.startedAt.map { format(now.timeIntervalSince($0)) } ?? "-")
-            stat("Moves", model.isActive ? "\(model.moveCount)" : "-")
-            stat("Last move", model.lastMove.map { ago(now.timeIntervalSince($0)) } ?? "-")
+            stat("Active for", model.startedAt.map { format(now.timeIntervalSince($0)) } ?? "-", on: model.isActive)
+            stat("Moves", model.isActive ? "\(model.moveCount)" : "-", on: model.isActive)
+            stat("Last move", model.lastMove.map { ago(now.timeIntervalSince($0)) } ?? "-", on: model.isActive)
         }
-        .opacity(model.isActive ? 1 : 0.5)
-        .padding(.vertical, 14)
+        .padding(.vertical, 16)
         .frame(width: 260)
         .card()
     }
 
-    private func stat(_ title: String, _ value: String) -> some View {
+    private func stat(_ title: String, _ value: String, on: Bool) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(on ? Color.white : Color.white.opacity(0.4))
                 .monospacedDigit()
                 .lineLimit(1).minimumScaleFactor(0.7)
-            Text(title).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+            Text(title).font(.system(size: 11)).foregroundStyle(Color.white.opacity(on ? 0.5 : 0.4)).lineLimit(1)
         }
         .frame(maxWidth: .infinity)
     }
 
     private var footer: some View {
         let muted = Color.white.opacity(0.36)
-        return VStack(spacing: 6) {
+        return VStack(spacing: 8) {
             if let error = model.loginError {
-                Text(error).font(.system(size: 10)).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading)
+                Text(error).font(.system(size: 11)).foregroundStyle(.red).frame(maxWidth: .infinity, alignment: .leading)
             }
-            HStack(spacing: 14) {
+            HStack(spacing: 16) {
                 Text("WideAwake")
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(muted.opacity(0.7))
                     .fixedSize()
                 Spacer(minLength: 0)
@@ -335,12 +332,12 @@ struct PopoverView: View {
                 }
             }
             .buttonStyle(.plain)
-            .font(.system(size: 10, weight: .medium))
+            .font(.system(size: 11, weight: .medium))
             .foregroundStyle(muted)
             .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 2)
-        .padding(.top, 6)
+        .padding(.horizontal, 4)
+        .padding(.top, 8)
     }
 
     /// Short relative time ("12s ago") so the stats columns stay evenly spaced.
