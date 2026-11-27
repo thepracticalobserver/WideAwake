@@ -10,8 +10,8 @@ final class Model: ObservableObject {
     let interval: TimeInterval = 30
 
     @Published var isActive = false
-    /// Independent of the mouse nudge: only holds a system-sleep assertion, so the
-    /// screensaver and display sleep still work while you are away.
+    /// Independent of the mouse nudge: holds system and display sleep assertions only (no input
+    /// events), so the screen never goes dark but nothing moves your cursor.
     @Published var caffeineOn = false
     @Published var startedAt: Date?
     @Published var lastMove: Date?
@@ -29,6 +29,7 @@ final class Model: ObservableObject {
     private var systemSleepAssertion: IOPMAssertionID = 0
     private var userActivityAssertion: IOPMAssertionID = 0
     private var caffeineAssertion: IOPMAssertionID = 0
+    private var caffeineDisplayAssertion: IOPMAssertionID = 0
 
     func toggle() { isActive ? stop() : start() }
 
@@ -40,9 +41,21 @@ final class Model: ObservableObject {
                                             "WideAwake Caffeine" as CFString,
                                             &caffeineAssertion)
             }
-        } else if caffeineAssertion != 0 {
-            IOPMAssertionRelease(caffeineAssertion)
-            caffeineAssertion = 0
+            if caffeineDisplayAssertion == 0 {
+                IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
+                                            IOPMAssertionLevel(kIOPMAssertionLevelOn),
+                                            "WideAwake Caffeine" as CFString,
+                                            &caffeineDisplayAssertion)
+            }
+        } else {
+            if caffeineAssertion != 0 {
+                IOPMAssertionRelease(caffeineAssertion)
+                caffeineAssertion = 0
+            }
+            if caffeineDisplayAssertion != 0 {
+                IOPMAssertionRelease(caffeineDisplayAssertion)
+                caffeineDisplayAssertion = 0
+            }
         }
         caffeineOn = on
         onActiveChanged?()
@@ -252,7 +265,7 @@ struct PopoverView: View {
                 .frame(width: 26)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Caffeine").font(.system(size: 14, weight: .medium)).lineLimit(1)
-                Text(covered ? "Covered by Wide Awake" : "Screensaver still works")
+                Text(covered ? "Covered by Wide Awake" : "Screen stays on")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -270,7 +283,7 @@ struct PopoverView: View {
         .frame(width: 260)
         .card()
         .opacity(covered ? 0.55 : 1)
-        .help("Keeps your Mac from sleeping without moving the mouse, so the screensaver still starts")
+        .help("Keeps your Mac and screen awake without moving the mouse")
     }
 
     private func stats(now: Date) -> some View {
