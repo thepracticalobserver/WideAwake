@@ -10,6 +10,9 @@ final class Model: ObservableObject {
     let interval: TimeInterval = 30
 
     @Published var isActive = false
+    /// Independent of the mouse nudge: only holds a system-sleep assertion, so the
+    /// screensaver and display sleep still work while you are away.
+    @Published var caffeineOn = false
     @Published var startedAt: Date?
     @Published var lastMove: Date?
     @Published var nextMove: Date?
@@ -25,8 +28,25 @@ final class Model: ObservableObject {
     private var sleepAssertion: IOPMAssertionID = 0
     private var systemSleepAssertion: IOPMAssertionID = 0
     private var userActivityAssertion: IOPMAssertionID = 0
+    private var caffeineAssertion: IOPMAssertionID = 0
 
     func toggle() { isActive ? stop() : start() }
+
+    func setCaffeine(_ on: Bool) {
+        if on {
+            if caffeineAssertion == 0 {
+                IOPMAssertionCreateWithName(kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
+                                            IOPMAssertionLevel(kIOPMAssertionLevelOn),
+                                            "WideAwake Caffeine" as CFString,
+                                            &caffeineAssertion)
+            }
+        } else if caffeineAssertion != 0 {
+            IOPMAssertionRelease(caffeineAssertion)
+            caffeineAssertion = 0
+        }
+        caffeineOn = on
+        onActiveChanged?()
+    }
 
     func start() {
         // Posting synthetic mouse events requires the Accessibility permission
@@ -149,6 +169,7 @@ struct PopoverView: View {
 
         return VStack(spacing: 16) {
             top(remaining: remaining, progress: progress, trusted: trusted)
+            caffeine
             stats(now: now)
             footer
         }
@@ -218,6 +239,38 @@ struct PopoverView: View {
         .padding(16)
         .frame(width: 260)
         .card()
+    }
+
+    /// Separate keep-awake switch: no mouse movement, so the screensaver still runs when you are away.
+    private var caffeine: some View {
+        let covered = model.isActive  // Wide Awake already holds system and display sleep
+        let blue = Color(red: 0.23, green: 0.61, blue: 0.96)
+        return HStack(spacing: 12) {
+            Image(systemName: "cup.and.saucer")
+                .font(.system(size: 20))
+                .foregroundStyle(model.caffeineOn ? blue : Color.white.opacity(0.55))
+                .frame(width: 26)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Caffeine").font(.system(size: 14, weight: .medium)).lineLimit(1)
+                Text(covered ? "Covered by Wide Awake" : "Screensaver still works")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Toggle("Caffeine", isOn: Binding(get: { model.caffeineOn }, set: { model.setCaffeine($0) }))
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .tint(blue)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .frame(width: 260)
+        .card()
+        .opacity(covered ? 0.55 : 1)
+        .help("Keeps your Mac from sleeping without moving the mouse, so the screensaver still starts")
     }
 
     private func stats(now: Date) -> some View {
@@ -335,12 +388,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Dev flag used to produce the README screenshots: `--snapshot out.png [--on]`.
         let args = CommandLine.arguments
         if let i = args.firstIndex(of: "--snapshot"), i + 1 < args.count {
-            snapshot(to: args[i + 1], active: args.contains("--on"))
+            snapshot(to: args[i + 1], active: args.contains("--on"), caffeine: args.contains("--caffeine"))
         }
     }
 
-    private func snapshot(to path: String, active: Bool) {
+    private func snapshot(to path: String, active: Bool, caffeine: Bool = false) {
         model.presented = true
+        model.caffeineOn = caffeine
         if active {
             model.isActive = true
             model.startedAt = Date(timeIntervalSinceNow: -754)
@@ -420,11 +474,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateIcon() {
         let on = model.isActive
-        let image = NSImage(systemSymbolName: on ? "lightbulb.fill" : "lightbulb",
-                            accessibilityDescription: on ? "WideAwake on" : "WideAwake off")
+        let caffeine = model.caffeineOn && !on
+        let symbol = on ? "lightbulb.fill" : caffeine ? "cup.and.saucer.fill" : "lightbulb"
+        let tip = on ? "WideAwake: on" : caffeine ? "Caffeine: on" : "WideAwake: off"
+        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: tip)
         image?.isTemplate = true
         statusItem.button?.image = image
-        statusItem.button?.toolTip = on ? "WideAwake: on" : "WideAwake: off"
+        statusItem.button?.toolTip = tip
     }
 }
 

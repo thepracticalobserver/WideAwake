@@ -12,6 +12,7 @@ Click the lightbulb in the menubar, then tap the bulb to turn it on.
 
 - Every 30 seconds it nudges the cursor 5px and back, taps Shift, and holds off display and system sleep.
 - It skips a nudge if you were using the Mac in the last 10 seconds.
+- **Caffeine** is a separate switch under the bulb. It only keeps the Mac from sleeping, with no mouse or keyboard events and no Accessibility permission, so your screensaver still starts when you are away. Turn it on by itself for that. While Wide Awake is on it is already covered, because Wide Awake also keeps the display awake.
 - Optional "Start at login".
 
 ## Build
